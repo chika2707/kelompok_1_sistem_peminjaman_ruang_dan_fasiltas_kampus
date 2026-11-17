@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PinjamKampus</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+/* Layout: satu kolom aplikasi dengan bilah atas, tab per peran, dan area kerja yang terbagi dua (daftar | rincian) di layar lebar. */
+:root{
+  color-scheme:light;
+  --bg:#f3f5fa; --surface:#ffffff; --ink:#14213d; --muted:#5a6683; --line:#d9dfec;
+  --accent:#1d3f8a; --accent-ink:#ffffff; --accent-soft:#e4ebfa;
+  --ok:#17704a; --ok-soft:#dff3e8; --warn:#8a5a00; --warn-soft:#fbefd2; --bad:#b3261e; --bad-soft:#fbe4e2;
+  --hatch:#c9d0e0; --font-body:'Inter',system-ui,sans-serif; --font-head:'Space Grotesk','Inter',system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0d1325; --surface:#151d35; --ink:#e7ebf6; --muted:#9ba7c4; --line:#2a3555;
+  --accent:#8fb0ff; --accent-ink:#0d1325; --accent-soft:#1d2b52;
+  --ok:#5fd09b; --ok-soft:#14352a; --warn:#f0c46a; --warn-soft:#3a2d10; --bad:#ff8b82; --bad-soft:#3e1b19; --hatch:#33405f; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0d1325; --surface:#151d35; --ink:#e7ebf6; --muted:#9ba7c4; --line:#2a3555;
+  --accent:#8fb0ff; --accent-ink:#0d1325; --accent-soft:#1d2b52;
+  --ok:#5fd09b; --ok-soft:#14352a; --warn:#f0c46a; --warn-soft:#3a2d10; --bad:#ff8b82; --bad-soft:#3e1b19; --hatch:#33405f; color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:14px;line-height:1.5;padding-block:0;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--font-head);margin:0;text-wrap:balance;letter-spacing:-.01em}
+h1{font-size:22px} h2{font-size:18px} h3{font-size:15px}
+button,input,select,textarea{font:inherit;color:inherit}
+.wrap{max-width:1040px;margin:0 auto;padding-block:16px 40px}
+.top{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between;padding-bottom:12px}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--font-head);font-weight:700;font-size:18px}
+.mark{width:28px;height:28px;border-radius:7px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-size:15px}
+.who{display:flex;flex-wrap:wrap;gap:8px;align-items:center;color:var(--muted);font-size:13px}
+.who select{padding:5px 8px;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+.tabs{display:flex;gap:4px;overflow-x:auto;border-bottom:1px solid var(--line);margin-bottom:18px}
+.tab{background:none;border:0;border-bottom:3px solid transparent;padding:10px 14px;cursor:pointer;color:var(--muted);font-weight:500;white-space:nowrap}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent);font-weight:600}
+.badge{display:inline-block;min-width:18px;padding:0 6px;border-radius:9px;background:var(--bad);color:#fff;font-size:11px;text-align:center;margin-left:6px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px}
+.stack{display:grid;gap:14px}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.row.between{justify-content:space-between}
+.muted{color:var(--muted)} .small{font-size:12px}
+.btn{border:1px solid var(--line);background:var(--surface);padding:8px 14px;border-radius:7px;cursor:pointer;font-weight:500}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.danger{color:var(--bad);border-color:var(--bad)}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.pill{display:inline-block;padding:2px 10px;border-radius:12px;font-size:12px;font-weight:600;background:var(--accent-soft);color:var(--accent)}
+.pill.ok{background:var(--ok-soft);color:var(--ok)} .pill.warn{background:var(--warn-soft);color:var(--warn)} .pill.bad{background:var(--bad-soft);color:var(--bad)}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px}
+.chip{flex:0 0 auto;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:6px 10px;cursor:pointer;text-align:center;min-width:58px}
+.chip b{display:block;font-family:var(--font-head);font-size:16px}
+.chip[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.chip.soon{border-style:dashed}
+.scroll{overflow-x:auto}
+.cal{display:grid;grid-template-columns:150px repeat(4,minmax(92px,1fr));min-width:560px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.cal>div{padding:8px;border-bottom:1px solid var(--line)}
+.cal .h{background:var(--accent-soft);font-weight:600;font-size:12px;text-align:center}
+.cal .rn{font-weight:600} .cal .rn span{display:block;font-weight:400;font-size:12px;color:var(--muted)}
+.cell{width:100%;height:100%;min-height:42px;border-radius:6px;border:1.5px solid var(--line);background:var(--surface);cursor:pointer;font-size:12px}
+.cell:hover{border-color:var(--accent)}
+.cell.sel{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+.cell.busy{background:repeating-linear-gradient(45deg,var(--hatch) 0 3px,transparent 3px 8px);cursor:not-allowed;font-weight:600;color:var(--muted)}
+.cell.wait{background:var(--warn-soft);color:var(--warn);cursor:not-allowed}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--muted)}
+.legend i{display:inline-block;width:14px;height:14px;border-radius:3px;border:1.5px solid var(--line);vertical-align:-2px;margin-right:5px}
+.legend .b{background:repeating-linear-gradient(45deg,var(--hatch) 0 3px,transparent 3px 8px)} .legend .w{background:var(--warn-soft)} .legend .s{background:var(--accent);border-color:var(--accent)}
+.form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.form .full{grid-column:1/-1}
+@media (max-width:640px){.form{grid-template-columns:minmax(0,1fr)}}
+label.f{display:grid;gap:4px;font-weight:600;font-size:12px;color:var(--muted)}
+label.f input,label.f select,label.f textarea,.in{padding:8px 10px;border:1px solid var(--line);border-radius:7px;background:var(--surface);font-weight:400;font-size:14px;color:var(--ink);width:100%}
+label.f.err input,label.f.err select{border-color:var(--bad)}
+.errtxt{color:var(--bad);font-size:12px;font-weight:500}
+.notice{padding:10px 12px;border-radius:8px;background:var(--warn-soft);color:var(--warn);font-size:13px}
+.notice.bad{background:var(--bad-soft);color:var(--bad)} .notice.ok{background:var(--ok-soft);color:var(--ok)}
+.split{display:grid;grid-template-columns:minmax(0,300px) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:760px){.split{grid-template-columns:minmax(0,1fr)}}
+.item{display:block;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 12px;cursor:pointer}
+.item[aria-current="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.kv{display:grid;grid-template-columns:130px minmax(0,1fr);gap:6px 12px;margin:0}
+.kv dt{color:var(--muted)} .kv dd{margin:0;font-weight:500}
+.steps{display:flex;gap:0;margin:14px 0 8px;overflow-x:auto}
+.step{flex:1 0 74px;text-align:center;font-size:11px;color:var(--muted);position:relative}
+.step i{display:block;width:16px;height:16px;border-radius:50%;border:2px solid var(--line);background:var(--surface);margin:0 auto 4px;position:relative;z-index:1}
+.step::before{content:"";position:absolute;top:7px;left:-50%;width:100%;height:2px;background:var(--line)}
+.step:first-child::before{display:none}
+.step.done i{background:var(--accent);border-color:var(--accent)} .step.done::before{background:var(--accent)}
+.step.now{color:var(--ink);font-weight:700}
+.tbl{width:100%;border-collapse:collapse;min-width:520px}
+.tbl th,.tbl td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);font-size:13px;vertical-align:top}
+.tbl th{color:var(--muted);font-weight:600;font-size:12px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.stat{border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:var(--surface)}
+.stat b{display:block;font-family:var(--font-head);font-size:24px;font-variant-numeric:tabular-nums}
+.overlay{position:fixed;inset:0;background:rgba(10,15,30,.55);display:grid;place-items:center;padding:16px;z-index:30;overflow:auto}
+.modal{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px;width:min(460px,100%);display:grid;gap:14px;max-height:100%;overflow:auto}
+.qr{display:block;margin:0 auto;width:180px;height:180px;background:#fff;padding:8px;border-radius:6px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:8px;z-index:40;max-width:min(92vw,460px);font-size:13px}
+.login{max-width:520px;margin:30px auto 0;display:grid;gap:16px}
+.roles{display:grid;gap:8px}
+.role{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:8px;padding:10px 12px;cursor:pointer;background:var(--surface)}
+.role input{margin-top:4px}
+.role:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
+ol.how{margin:0;padding-left:20px;display:grid;gap:4px;color:var(--muted)}
+details summary{cursor:pointer;color:var(--accent);font-weight:500}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<noscript>Prototipe ini membutuhkan JavaScript. Aktifkan JavaScript di browser Anda.</noscript>
+<div id="app" class="wrap"></div>
+<div id="layer"></div>
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const MON=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+const HARI=['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
+const iso=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const dObj=s=>{const p=s.split('-').map(Number);return new Date(p[0],p[1]-1,p[2])};
+const fmt=s=>{const d=dObj(s);return HARI[d.getDay()]+', '+d.getDate()+' '+MON[d.getMonth()]+' '+d.getFullYear()};
+const HARI_PENUH=['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+const NOW=new Date();
+const plus=n=>new Date(NOW.getFullYear(),NOW.getMonth(),NOW.getDate()+n);
+const dm=d=>d.getDate()+' '+MON[d.getMonth()];
+const DAYS=[];for(let i=1;i<=11;i++)DAYS.push(iso(plus(i)));
+const MIN_DATE=iso(plus(3));
+const TODAY_LABEL=HARI_PENUH[NOW.getDay()]+', '+dm(NOW)+' '+NOW.getFullYear();
+const STAMP_DAY=dm(NOW), YESTERDAY=dm(plus(-1));
+const SLOTS=['08.00-10.00','10.00-12.00','13.00-15.00','15.00-17.00'];
+const PENDING=['Menunggu verifikasi','Menunggu persetujuan'], FIRM=['Disetujui','Digunakan'];
+const ROLES={
+  peminjam:{nama:'Peminjam',desc:'Mahasiswa, organisasi, dosen, atau unit. Melihat kalender, mengajukan, melacak, membatalkan.',user:'HMJ PTI',tabs:[['kalender','Kalender'],['saya','Pengajuan Saya'],['notif','Notifikasi']]},
+  admin:{nama:'Admin',desc:'Staf sarana prasarana. Mengelola data induk, memverifikasi pengajuan, melihat laporan.',user:'Staf Sarpras',tabs:[['verifikasi','Verifikasi'],['induk','Data Induk'],['laporan','Laporan']]},
+  pimpinan:{nama:'Pimpinan',desc:'Kepala bagian. Menyetujui atau menolak pengajuan yang sudah diverifikasi.',user:'Kepala Bagian',tabs:[['persetujuan','Persetujuan'],['laporan','Laporan']]},
+  petugas:{nama:'Petugas lapangan',desc:'Keamanan atau teknisi. Memeriksa kode QR saat check-in dan mencatat pengembalian.',user:'Petugas Keamanan',tabs:[['hari','Peminjaman Aktif']]}
+};
+function fresh(){
+  const mk=(no,keg,pem,res,date,s0,s1,st,extra)=>Object.assign({id:'b'+no,no:'PJ-2026-0'+no,kegiatan:keg,pj:pem,pemohon:pem,res:res,date:date,slots:range(s0,s1),status:st,surat:'surat-izin.pdf',catatan:'',alasan:'',qr:FIRM.concat(['Selesai']).includes(st)?'QR-PJ-2026-0'+no:'',jml:30,hist:[{t:YESTERDAY+' 09.10',txt:'Diajukan'}],kondisi:null},extra||{});
+  const D4=iso(plus(4)),D7=iso(plus(7)),D8=iso(plus(8));
+  return {role:null,tab:null,date:D8,sel:[],form:null,pick:null,note:'',alasan:'',q:'',modal:null,msg:'',clock:NOW.getHours()*60+NOW.getMinutes(),nextNo:143,
+    res:[
+      {id:'r1',nama:'Aula Utama',tipe:'ruang',kap:500,gedung:'Gedung Rektorat',aktif:true},
+      {id:'r2',nama:'Ruang Kuliah 101',tipe:'ruang',kap:40,gedung:'Gedung FKIP',aktif:true},
+      {id:'r3',nama:'Ruang Kuliah 102',tipe:'ruang',kap:40,gedung:'Gedung FKIP',aktif:true},
+      {id:'r4',nama:'Lab Komputer',tipe:'ruang',kap:30,gedung:'Gedung FKIP',aktif:true},
+      {id:'f1',nama:'Proyektor LCD',tipe:'fasilitas',kap:5,gedung:'Gudang Sarpras',aktif:true},
+      {id:'f2',nama:'Sound system',tipe:'fasilitas',kap:2,gedung:'Gudang Sarpras',aktif:true}],
+    bk:[
+      mk('141','Seminar Kewirausahaan','BEM FKIP',['r1'],D8,2,2,'Menunggu persetujuan',{catatan:'Berkas lengkap.',jml:200}),
+      mk('136','Kuliah Pengganti RPL','Dosen Prodi PTI',['r2'],D8,0,1,'Disetujui',{jml:35}),
+      mk('137','Latihan Paduan Suara','UKM Seni',['r3'],D8,3,3,'Disetujui',{jml:25}),
+      mk('138','Praktikum Basis Data','Dosen Prodi PTI',['r4'],D8,1,2,'Disetujui',{jml:28}),
+      mk('140','Malam Keakraban Mahasiswa Baru','HMJ Manajemen',['f2'],D8,1,1,'Menunggu verifikasi',{}),
+      mk('139','Rapat HMJ','HMJ PTI',['r2'],D4,2,2,'Menunggu verifikasi',{jml:20}),
+      mk('135','Diskusi Panel Literasi Digital','HMJ PTI',['r1','f1'],D7,0,1,'Disetujui',{jml:120})],
+    notif:[{id:'n0',t:YESTERDAY+' 14.30',txt:'Pengajuan PJ-2026-0135 disetujui. Kode QR tersedia di Pengajuan Saya.',read:true}]};
+}
+function range(a,b){const r=[];for(let i=a;i<=b;i++)r.push(i);return r}
+let S=fresh();
+const me=()=>ROLES[S.role].user;
+const stamp=()=>{S.clock+=7;const t=S.clock%1440,h=Math.floor(t/60),m=t%60;return STAMP_DAY+' '+String(h).padStart(2,'0')+'.'+String(m).padStart(2,'0')};
+const resOf=id=>S.res.find(r=>r.id===id);
+const bkOf=id=>S.bk.find(b=>b.id===id);
+const slotLabel=b=>SLOTS[b.slots[0]].split('-')[0]+'-'+SLOTS[b.slots[b.slots.length-1]].split('-')[1];
+const pillCls=st=>({'Disetujui':'ok','Digunakan':'ok','Selesai':'ok','Ditolak':'bad','Dibatalkan':'bad','Dikembalikan':'bad','Menunggu verifikasi':'warn','Menunggu persetujuan':'warn'}[st]||'');
+function conflicts(resIds,date,slots,excl,statuses){
+  const out=[];
+  S.bk.forEach(b=>{
+    if(b.id===excl||b.date!==date||!statuses.includes(b.status))return;
+    resIds.forEach(r=>{if(b.res.includes(r)){slots.forEach(s=>{if(b.slots.includes(s))out.push({res:r,slot:s,by:b})})}});
+  });
+  return out;
+}
+function cellState(rid,date,s){
+  const b=S.bk.find(x=>x.date===date&&x.res.includes(rid)&&x.slots.includes(s)&&(FIRM.includes(x.status)||PENDING.includes(x.status)));
+  if(!b)return {k:'free'};
+  return {k:FIRM.includes(b.status)?'busy':'wait',b:b};
+}
+function toast(msg){
+  const old=$('.toast');if(old)old.remove();
+  const t=document.createElement('div');t.className='toast';t.setAttribute('role','status');t.textContent=msg;document.body.appendChild(t);
+  setTimeout(()=>{if(t.parentNode)t.remove()},3600);
+}
+function addHist(b,txt){b.hist.push({t:stamp(),txt:txt})}
+function notify(txt){S.notif.unshift({id:'n'+Date.now()+Math.random(),t:stamp(),txt:txt,read:false})}
+function qrSvg(code){
+  let h=2166136261;for(let i=0;i<code.length;i++){h^=code.charCodeAt(i);h=Math.imul(h,16777619)}
+  const rnd=()=>{h^=h<<13;h^=h>>>17;h^=h<<5;return (h>>>0)/4294967296};
+  const N=21,c=7;let r='';
+  const finder=(x,y)=>x<7&&y<7||x>=N-7&&y<7||x<7&&y>=N-7;
+  for(let y=0;y<N;y++)for(let x=0;x<N;x++){
+    let on;
+    if(finder(x,y)){
+      const fx=x<7?x:x-(N-7),fy=y<7?y:y-(N-7);
+      on=fx===0||fx===6||fy===0||fy===6||(fx>=2&&fx<=4&&fy>=2&&fy<=4);
+    }else on=rnd()>0.52;
+    if(on)r+='<rect x="'+x+'" y="'+y+'" width="1.02" height="1.02"/>';
+  }
+  return '<svg class="qr" viewBox="-1 -1 '+(N+2)+' '+(N+2)+'" role="img" aria-label="Contoh tampilan kode QR '+esc(code)+'" fill="#111">'+r+'</svg>';
+}
+/* ---------- tampilan ---------- */
+function render(){
+  const app=$('#app');
+  if(!S.role){app.innerHTML=vLogin();return}
+  const R=ROLES[S.role];
+  const unread=S.role==='peminjam'?S.notif.filter(n=>!n.read).length:0;
+  app.innerHTML=
+   '<div class="top"><div class="brand"><span class="mark" aria-hidden="true">P</span>PinjamKampus</div>'+
+   '<div class="who"><label>Lihat sebagai <select id="roleSel" data-f="role">'+Object.keys(ROLES).map(k=>'<option value="'+k+'"'+(k===S.role?' selected':'')+'>'+ROLES[k].nama+'</option>').join('')+'</select></label>'+
+   '<span>'+esc(R.user)+'</span><button class="btn" data-act="logout">Keluar</button></div></div>'+
+   '<div class="tabs" role="tablist">'+R.tabs.map(t=>'<button class="tab" role="tab" aria-selected="'+(S.tab===t[0])+'" data-act="tab" data-arg="'+t[0]+'">'+t[1]+(t[0]==='notif'&&unread?'<span class="badge">'+unread+'</span>':'')+'</button>').join('')+'</div>'+
+   '<main>'+view()+'</main>';
+  const lay=$('#layer');lay.innerHTML=S.modal?vModal():'';
+}
+function view(){
+  switch(S.tab){
+    case 'kalender':return vKalender();
+    case 'ajukan':return vForm();
+    case 'saya':return vSaya();
+    case 'notif':return vNotif();
+    case 'verifikasi':return vQueue('admin');
+    case 'persetujuan':return vQueue('pimpinan');
+    case 'induk':return vInduk();
+    case 'laporan':return vLaporan();
+    case 'hari':return vHari();
+  }
+  return '';
+}
+function vLogin(){
+  return '<div class="login"><div class="brand"><span class="mark" aria-hidden="true">P</span>PinjamKampus</div>'+
+  '<div><h1>Peminjaman Ruang dan Fasilitas Kampus</h1><p class="muted">Prototipe interaktif kelompok 1, Sistem Informasi dan Proses Bisnis, Prodi PTI, Universitas Sulawesi Barat. Data pada halaman ini contoh dan kembali awal saat halaman dimuat ulang.</p></div>'+
+  '<div class="card stack"><h3>Login (UC-01)</h3>'+
+  '<label class="f">Email<input id="lgEmail" value="pengguna@unsulbar.ac.id" readonly></label>'+
+  '<label class="f">Kata sandi<input type="password" value="prototipe" readonly></label>'+
+  '<div class="roles" role="radiogroup" aria-label="Masuk sebagai">'+Object.keys(ROLES).map((k,i)=>'<label class="role"><input type="radio" name="rl" value="'+k+'"'+(i===0?' checked':'')+'><span><b>'+ROLES[k].nama+'</b><br><span class="muted small">'+ROLES[k].desc+'</span></span></label>').join('')+'</div>'+
+  '<button class="btn primary" data-act="login">Masuk</button></div>'+
+  '<div class="card"><h3>Alur yang bisa dicoba</h3><ol class="how"><li>Masuk sebagai Peminjam, pilih slot di Kalender, lalu Ajukan Peminjaman.</li><li>Coba slot bentrok atau tanggal terlalu dekat untuk melihat penolakan.</li><li>Ganti peran ke Admin: verifikasi pengajuan dan teruskan ke pimpinan.</li><li>Ganti peran ke Pimpinan: setujui atau tolak dengan alasan.</li><li>Kembali ke Peminjam untuk melihat kode QR, lalu ke Petugas untuk check-in dan pengembalian.</li><li>Admin dan Pimpinan melihat Laporan dan riwayat.</li></ol></div></div>';
+}
+function vKalender(){
+  const rows=S.res.filter(r=>r.aktif);
+  let g='<div class="cal"><div class="h" style="text-align:left">Ruang / Fasilitas</div>'+SLOTS.map(s=>'<div class="h">'+s+'</div>').join('');
+  rows.forEach(r=>{
+    g+='<div class="rn">'+esc(r.nama)+'<span>'+r.kap+(r.tipe==='ruang'?' orang':' unit')+'</span></div>';
+    SLOTS.forEach((_,s)=>{
+      const st=cellState(r.id,S.date,s),key=r.id+'|'+s,sel=S.sel.includes(key);
+      let inner;
+      if(st.k==='busy')inner='<button class="cell busy" disabled title="'+esc(st.b.kegiatan)+'">Terisi</button>';
+      else if(st.k==='wait')inner='<button class="cell wait" disabled title="'+esc(st.b.kegiatan)+'">Menunggu</button>';
+      else inner='<button class="cell'+(sel?' sel':'')+'" aria-pressed="'+sel+'" data-act="toggle" data-arg="'+key+'">'+(sel?'Dipilih':'Pilih')+'</button>';
+      g+='<div>'+inner+'</div>';
+    });
+  });
+  g+='</div>';
+  const soon=S.date<MIN_DATE;
+  return '<div class="stack"><div><h2>Kalender Ketersediaan</h2><p class="muted" style="margin:4px 0 0">Hari ini '+TODAY_LABEL+'. Pengajuan minimal tiga hari sebelum kegiatan.</p></div>'+
+  '<div class="chips" role="group" aria-label="Pilih tanggal">'+DAYS.map(d=>{const o=dObj(d);return '<button class="chip'+(d<MIN_DATE?' soon':'')+'" aria-pressed="'+(d===S.date)+'" data-act="date" data-arg="'+d+'">'+HARI[o.getDay()]+'<b>'+o.getDate()+'</b>'+MON[o.getMonth()]+'</button>'}).join('')+'</div>'+
+  (soon?'<div class="notice">Tanggal ini kurang dari tiga hari dari hari ini. Pengajuan akan ditolak sistem (BR-02).</div>':'')+
+  '<div class="card scroll">'+g+'</div>'+
+  '<div class="legend"><span><i></i>Tersedia</span><span><i class="b"></i>Terisi (disetujui)</span><span><i class="w"></i>Menunggu persetujuan</span><span><i class="s"></i>Dipilih</span></div>'+
+  '<div class="row between"><span class="muted">'+(S.sel.length?S.sel.length+' slot dipilih pada '+fmt(S.date):'Pilih satu atau lebih slot yang tersedia.')+'</span>'+
+  '<button class="btn primary" data-act="toForm"'+(S.sel.length?'':' disabled')+'>Ajukan Peminjaman</button></div></div>';
+}
+function newForm(){
+  const sel=S.sel.map(k=>{const p=k.split('|');return {r:p[0],s:+p[1]}});
+  const ruang=(sel.find(x=>resOf(x.r).tipe==='ruang')||{}).r||'';
+  const fas=[...new Set(sel.filter(x=>resOf(x.r).tipe==='fasilitas').map(x=>x.r))];
+  const ss=sel.map(x=>x.s);
+  return {kegiatan:'',pj:'',ruang:ruang,fas:fas,date:S.date,s0:ss.length?Math.min.apply(null,ss):0,s1:ss.length?Math.max.apply(null,ss):0,jml:'',surat:'',err:{},msg:'',conflict:null};
+}
+function vForm(){
+  const f=S.form,e=f.err||{};
+  const opt=(arr,v)=>arr.map(a=>'<option value="'+a[0]+'"'+(String(a[0])===String(v)?' selected':'')+'>'+esc(a[1])+'</option>').join('');
+  const slotOpts=SLOTS.map((s,i)=>[i,s]);
+  return '<div class="stack"><div><h2>Formulir Pengajuan Peminjaman</h2><p class="muted" style="margin:4px 0 0">UC-03. Jadwal bentrok dan data tidak lengkap diperiksa saat Anda menekan Kirim.</p></div>'+
+  '<div class="card stack"><div class="form">'+
+  '<label class="f'+(e.kegiatan?' err':'')+'">Nama kegiatan<input data-f="kegiatan" value="'+esc(f.kegiatan)+'" placeholder="Contoh: Seminar Literasi Digital">'+(e.kegiatan?'<span class="errtxt">Wajib diisi</span>':'')+'</label>'+
+  '<label class="f'+(e.pj?' err':'')+'">Penanggung jawab<input data-f="pj" value="'+esc(f.pj)+'" placeholder="Nama dan nomor HP">'+(e.pj?'<span class="errtxt">Wajib diisi</span>':'')+'</label>'+
+  '<label class="f'+(e.ruang?' err':'')+'">Ruang<select data-f="ruang"><option value="">Pilih ruang</option>'+opt(S.res.filter(r=>r.tipe==='ruang'&&r.aktif).map(r=>[r.id,r.nama+' ('+r.kap+' orang)']),f.ruang)+'</select>'+(e.ruang?'<span class="errtxt">Pilih ruang</span>':'')+'</label>'+
+  '<label class="f'+(e.jml?' err':'')+'">Jumlah peserta<input data-f="jml" type="number" min="1" value="'+esc(f.jml)+'" placeholder="Contoh: 150">'+(e.jml?'<span class="errtxt">'+esc(e.jml===true?'Wajib diisi':e.jml)+'</span>':'')+'</label>'+
+  '<label class="f">Tanggal<select data-f="date">'+opt(DAYS.map(d=>[d,fmt(d)+(d<MIN_DATE?' (terlalu dekat)':'')]),f.date)+'</select></label>'+
+  '<div class="row" style="align-items:end;flex-wrap:nowrap"><label class="f" style="flex:1">Mulai<select data-f="s0">'+opt(slotOpts.map(s=>[s[0],s[1].split('-')[0]]),f.s0)+'</select></label><label class="f" style="flex:1">Selesai<select data-f="s1">'+opt(slotOpts.map(s=>[s[0],s[1].split('-')[1]]),f.s1)+'</select></label></div>'+
+  '<div class="full"><div class="small muted" style="font-weight:600;margin-bottom:6px">Fasilitas tambahan</div><div class="row" style="gap:16px">'+S.res.filter(r=>r.tipe==='fasilitas'&&r.aktif).map(r=>'<label class="row" style="gap:6px"><input type="checkbox" data-f="fas" data-arg="'+r.id+'"'+(f.fas.includes(r.id)?' checked':'')+'>'+esc(r.nama)+'</label>').join('')+'</div></div>'+
+  '<div class="full"><div class="small muted" style="font-weight:600;margin-bottom:6px">Surat izin kegiatan</div>'+
+  '<div class="row"><label class="btn" style="cursor:pointer">Pilih berkas<input type="file" accept=".pdf" data-f="surat" hidden></label><button class="btn" data-act="sampleSurat">Pakai berkas contoh</button><span>'+(f.surat?esc(f.surat):'<span class="muted">Belum ada berkas (PDF, maksimal 5 MB)</span>')+'</span></div>'+(e.surat?'<span class="errtxt">Surat izin wajib diunggah</span>':'')+'</div></div>'+
+  (f.msg?'<div class="notice bad">'+f.msg+'</div>':'')+
+  (f.conflict?vConflict(f.conflict):'')+
+  '<div class="row between"><button class="btn" data-act="sampleForm">Isi data contoh</button><div class="row"><button class="btn" data-act="tab" data-arg="kalender">Batal</button><button class="btn primary" data-act="submit">Kirim</button></div></div></div></div>';
+}
+function vConflict(c){
+  return '<div class="notice bad"><b>Jadwal bentrok.</b> '+esc(c.text)+(c.altRooms.length||c.altSlots.length?'<div class="row" style="margin-top:8px"><span>Saran alternatif:</span>'+
+   c.altRooms.map(r=>'<button class="btn" data-act="altRoom" data-arg="'+r.id+'">Pakai '+esc(r.nama)+'</button>').join('')+
+   c.altSlots.map(s=>'<button class="btn" data-act="altSlot" data-arg="'+s[0]+'|'+s[1]+'">Pindah ke '+SLOTS[s[0]].split('-')[0]+'-'+SLOTS[s[1]].split('-')[1]+'</button>').join('')+'</div>':'<div style="margin-top:6px">Tidak ada alternatif pada tanggal ini.</div>')+'</div>';
+}
+function stepper(b){
+  const idx={'Menunggu verifikasi':0,'Menunggu persetujuan':1,'Disetujui':2,'Digunakan':3,'Selesai':4}[b.status];
+  if(idx===undefined)return '';
+  return '<div class="steps">'+['Diajukan','Diverifikasi','Disetujui','Digunakan','Selesai'].map((s,i)=>'<div class="step'+(i<=idx?' done':'')+(i===idx?' now':'')+'"><i></i>'+s+'</div>').join('')+'</div>';
+}
+function vSaya(){
+  const mine=S.bk.filter(b=>b.pemohon===me()).slice().reverse();
+  if(!mine.length)return '<div class="card"><h2>Pengajuan Saya</h2><p class="muted">Belum ada pengajuan. Buka tab Kalender untuk mengajukan peminjaman.</p></div>';
+  return '<div class="stack"><h2>Pengajuan Saya</h2>'+mine.map(b=>{
+    const canEdit=PENDING.includes(b.status),canCancel=canEdit||b.status==='Disetujui';
+    return '<div class="card"><div class="row between"><div><h3>'+esc(b.no)+' · '+esc(b.kegiatan)+'</h3><div class="muted">'+b.res.map(r=>esc(resOf(r).nama)).join(', ')+' · '+fmt(b.date)+', '+slotLabel(b)+'</div></div><span class="pill '+pillCls(b.status)+'">'+b.status+'</span></div>'+
+    stepper(b)+
+    (b.status==='Ditolak'?'<div class="notice bad">Ditolak. Alasan: '+esc(b.alasan)+'</div>':'')+
+    (b.status==='Dikembalikan'?'<div class="notice bad">Dikembalikan admin. Catatan: '+esc(b.catatan)+'</div>':'')+
+    (b.status==='Selesai'&&b.kondisi&&b.kondisi.some(k=>k.k!=='Baik')?'<div class="notice bad">Ada fasilitas rusak atau hilang. Dicatat sebagai tanggung jawab peminjam (BR-07).</div>':'')+
+    '<div class="row" style="margin-top:10px">'+
+    (b.qr&&(b.status==='Disetujui'||b.status==='Digunakan')?'<button class="btn primary" data-act="showQr" data-arg="'+b.id+'">Lihat kode QR</button>':'')+
+    (canEdit?'<button class="btn" data-act="editBk" data-arg="'+b.id+'">Ubah jadwal</button>':'')+
+    (canCancel?'<button class="btn danger" data-act="cancelBk" data-arg="'+b.id+'">Batalkan</button>':'')+'</div>'+
+    '<details style="margin-top:10px"><summary>Riwayat perubahan status</summary><ul style="margin:8px 0 0;padding-left:18px">'+b.hist.slice().reverse().map(h=>'<li><span class="muted">'+h.t+'</span> '+esc(h.txt)+'</li>').join('')+'</ul></details></div>';
+  }).join('')+'</div>';
+}
+function vNotif(){
+  S.notif.forEach(n=>n.read=true);
+  return '<div class="stack"><h2>Notifikasi</h2>'+(S.notif.length?S.notif.map(n=>'<div class="card"><div class="small muted">'+n.t+'</div>'+esc(n.txt)+'</div>').join(''):'<div class="card muted">Belum ada notifikasi.</div>')+'</div>';
+}
+function queueItems(role){
+  return S.bk.filter(b=>b.status===(role==='admin'?'Menunggu verifikasi':'Menunggu persetujuan'));
+}
+function vQueue(role){
+  const list=queueItems(role),adm=role==='admin';
+  if(!list.find(b=>b.id===S.pick))S.pick=list.length?list[0].id:null;
+  const b=S.pick?bkOf(S.pick):null;
+  let detail='<div class="card muted">'+(adm?'Tidak ada pengajuan yang menunggu verifikasi.':'Tidak ada pengajuan yang menunggu persetujuan.')+'</div>';
+  if(b){
+    const cf=conflicts(b.res,b.date,b.slots,b.id,FIRM);
+    detail='<div class="card stack"><div><h3>'+esc(b.no)+'</h3><div>'+esc(b.kegiatan)+'</div></div>'+
+    '<dl class="kv"><dt>Pemohon</dt><dd>'+esc(b.pemohon)+'</dd><dt>Penanggung jawab</dt><dd>'+esc(b.pj)+'</dd><dt>Tempat</dt><dd>'+b.res.map(r=>esc(resOf(r).nama)).join(', ')+'</dd><dt>Waktu</dt><dd>'+fmt(b.date)+', '+slotLabel(b)+'</dd><dt>Peserta</dt><dd>'+esc(b.jml)+' orang</dd><dt>Surat izin</dt><dd>'+esc(b.surat)+'</dd><dt>Status bentrok</dt><dd>'+(cf.length?'<span class="pill bad">Bentrok dengan '+esc(cf[0].by.no)+'</span>':'<span class="pill ok">Tidak ada bentrok</span>')+'</dd></dl>'+
+    (!adm&&b.catatan?'<div class="notice" style="background:var(--accent-soft);color:var(--ink)">Catatan admin: '+esc(b.catatan)+'</div>':'')+
+    (S.msg?'<div class="notice bad">'+esc(S.msg)+'</div>':'')+
+    (adm?'<label class="f">Catatan verifikasi<textarea data-f="note" rows="2" placeholder="Wajib diisi bila dikembalikan">'+esc(S.note)+'</textarea></label>':'<label class="f">Alasan (wajib bila ditolak)<input data-f="alasan" value="'+esc(S.alasan)+'"></label>')+
+    '<div class="row" style="justify-content:flex-end"><button class="btn danger" data-act="'+(adm?'return':'reject')+'">'+(adm?'Kembalikan':'Tolak')+'</button><button class="btn primary" data-act="'+(adm?'forward':'approve')+'">'+(adm?'Teruskan ke pimpinan':'Setujui')+'</button></div></div>';
+  }
+  return '<div class="stack"><h2>'+(adm?'Verifikasi Pengajuan':'Menunggu Persetujuan')+' ('+list.length+')</h2><div class="split"><div class="stack">'+
+   list.map(x=>'<button class="item" data-act="pick" data-arg="'+x.id+'" aria-current="'+(x.id===S.pick)+'"><b>'+esc(x.no)+'</b> '+esc(x.kegiatan)+'<div class="small muted">'+x.res.map(r=>esc(resOf(r).nama)).join(', ')+' · '+fmt(x.date)+'</div></button>').join('')+'</div>'+detail+'</div></div>';
+}
+function vInduk(){
+  return '<div class="stack"><h2>Data Induk Ruang dan Fasilitas</h2><div class="card scroll"><table class="tbl"><thead><tr><th>Nama</th><th>Jenis</th><th>Kapasitas / jumlah</th><th>Lokasi</th><th>Status</th></tr></thead><tbody>'+
+  S.res.map(r=>'<tr><td>'+esc(r.nama)+'</td><td>'+r.tipe+'</td><td>'+r.kap+'</td><td>'+esc(r.gedung)+'</td><td><button class="btn" data-act="toggleAktif" data-arg="'+r.id+'">'+(r.aktif?'Aktif':'Nonaktif')+'</button></td></tr>').join('')+'</tbody></table></div>'+
+  '<div class="card stack"><h3>Tambah data</h3><div class="form"><label class="f">Nama<input id="nrNama" placeholder="Contoh: Ruang Seminar"></label><label class="f">Jenis<select id="nrTipe"><option value="ruang">Ruang</option><option value="fasilitas">Fasilitas</option></select></label><label class="f">Kapasitas atau jumlah<input id="nrKap" type="number" min="1" value="20"></label><label class="f">Lokasi<input id="nrLok" placeholder="Contoh: Gedung FKIP"></label></div><div><button class="btn primary" data-act="addRes">Simpan</button></div></div></div>';
+}
+function vLaporan(){
+  const cnt=st=>S.bk.filter(b=>b.status===st).length;
+  const used=S.bk.filter(b=>FIRM.concat(['Selesai']).includes(b.status));
+  return '<div class="stack"><div class="row between"><h2>Laporan dan Riwayat</h2><div class="row"><button class="btn" data-act="export" data-arg="PDF">Ekspor PDF</button><button class="btn" data-act="export" data-arg="Excel">Ekspor Excel</button></div></div>'+
+  '<div class="stats">'+[['Menunggu verifikasi','Menunggu verifikasi'],['Menunggu persetujuan','Menunggu persetujuan'],['Disetujui','Disetujui'],['Selesai','Selesai'],['Ditolak','Ditolak']].map(s=>'<div class="stat"><b>'+cnt(s[0])+'</b>'+s[1]+'</div>').join('')+'</div>'+
+  '<div class="card scroll"><h3 style="margin-bottom:8px">Pemanfaatan aset</h3><table class="tbl"><thead><tr><th>Ruang / fasilitas</th><th>Peminjaman</th><th>Jam terpakai</th></tr></thead><tbody>'+
+  S.res.map(r=>{const u=used.filter(b=>b.res.includes(r.id));return '<tr><td>'+esc(r.nama)+'</td><td>'+u.length+'</td><td>'+u.reduce((a,b)=>a+b.slots.length*2,0)+' jam</td></tr>'}).join('')+'</tbody></table></div>'+
+  '<div class="card scroll"><h3 style="margin-bottom:8px">Riwayat peminjaman</h3><table class="tbl"><thead><tr><th>Nomor</th><th>Kegiatan</th><th>Pemohon</th><th>Jadwal</th><th>Status</th><th>Kondisi</th></tr></thead><tbody>'+
+  S.bk.slice().reverse().map(b=>'<tr><td>'+esc(b.no)+'</td><td>'+esc(b.kegiatan)+'</td><td>'+esc(b.pemohon)+'</td><td>'+fmt(b.date)+'<br><span class="muted">'+slotLabel(b)+'</span></td><td><span class="pill '+pillCls(b.status)+'">'+b.status+'</span></td><td>'+(b.kondisi?(b.kondisi.some(k=>k.k!=='Baik')?'<span class="pill bad">Perlu tindak lanjut</span>':'Baik')+(b.terlambat?' · terlambat':''):'-')+'</td></tr>').join('')+'</tbody></table></div></div>';
+}
+function vHari(){
+  const q=S.q.trim().toLowerCase();
+  const list=S.bk.filter(b=>(FIRM.includes(b.status))&&(!q||b.no.toLowerCase().includes(q)||b.qr.toLowerCase().includes(q)||b.kegiatan.toLowerCase().includes(q)));
+  return '<div class="stack"><div><h2>Peminjaman Aktif</h2><p class="muted" style="margin:4px 0 0">UC-11 dan UC-12. Ketik kode QR atau nomor pengajuan, misalnya QR-PJ-2026-0136, untuk mensimulasikan pemindaian.</p></div>'+
+  '<div class="row"><input class="in" style="flex:1;min-width:200px" id="qIn" data-f="q" value="'+esc(S.q)+'" placeholder="Kode QR atau nomor pengajuan"><button class="btn" data-act="search">Cari</button></div>'+
+  (list.length?list.map(b=>'<div class="card"><div class="row between"><div><h3>'+esc(b.no)+' · '+esc(b.kegiatan)+'</h3><div class="muted">'+b.res.map(r=>esc(resOf(r).nama)).join(', ')+' · '+fmt(b.date)+', '+slotLabel(b)+'</div><div class="small muted">Peminjam: '+esc(b.pemohon)+'</div></div><span class="pill '+pillCls(b.status)+'">'+b.status+'</span></div>'+
+   '<div class="row" style="margin-top:10px;justify-content:flex-end">'+(b.status==='Disetujui'?'<button class="btn primary" data-act="checkin" data-arg="'+b.id+'">Check-in (QR sah)</button>':'<button class="btn primary" data-act="retForm" data-arg="'+b.id+'">Catat pengembalian</button>')+'</div></div>').join(''):'<div class="card muted">Tidak ada peminjaman yang cocok.</div>')+'</div>';
+}
+function vModal(){
+  const m=S.modal;let body='';
+  if(m.type==='qr'){const b=bkOf(m.id);body='<h3>Kode QR '+esc(b.no)+'</h3>'+qrSvg(b.qr)+'<p class="muted" style="margin:0;text-align:center">'+esc(b.qr)+'<br>Tunjukkan kepada petugas saat check-in. Gambar ini contoh tampilan.</p>';}
+  if(m.type==='edit'){const b=bkOf(m.id),f=m.f;body='<h3>Ubah jadwal '+esc(b.no)+'</h3><label class="f">Tanggal<select data-f="m.date">'+DAYS.map(d=>'<option value="'+d+'"'+(d===f.date?' selected':'')+'>'+fmt(d)+'</option>').join('')+'</select></label><div class="row" style="flex-wrap:nowrap"><label class="f" style="flex:1">Mulai<select data-f="m.s0">'+SLOTS.map((s,i)=>'<option value="'+i+'"'+(i===f.s0?' selected':'')+'>'+s.split('-')[0]+'</option>').join('')+'</select></label><label class="f" style="flex:1">Selesai<select data-f="m.s1">'+SLOTS.map((s,i)=>'<option value="'+i+'"'+(i===f.s1?' selected':'')+'>'+s.split('-')[1]+'</option>').join('')+'</select></label></div>'+(m.err?'<div class="notice bad">'+esc(m.err)+'</div>':'')+'<div class="row" style="justify-content:flex-end"><button class="btn" data-act="closeModal">Batal</button><button class="btn primary" data-act="saveEdit">Simpan</button></div>';}
+  if(m.type==='ret'){const b=bkOf(m.id);body='<h3>Pengembalian '+esc(b.no)+'</h3>'+b.res.map((r,i)=>'<div class="stack" style="gap:6px"><b>'+esc(resOf(r).nama)+'</b><div class="row" style="flex-wrap:nowrap"><select class="in" data-f="m.k" data-arg="'+i+'" style="flex:0 0 120px"><option>Baik</option><option>Rusak</option><option>Hilang</option></select><input class="in" data-f="m.c" data-arg="'+i+'" placeholder="Catatan (opsional)"></div></div>').join('')+'<label class="row" style="gap:8px"><input type="checkbox" data-f="m.late">Pengembalian melewati hari kegiatan</label><div class="row" style="justify-content:flex-end"><button class="btn" data-act="closeModal">Batal</button><button class="btn primary" data-act="saveRet">Simpan pencatatan</button></div>';}
+  return '<div class="overlay" data-act="overlay"><div class="modal" role="dialog" aria-modal="true">'+body+(m.type==='qr'?'<button class="btn" data-act="closeModal">Tutup</button>':'')+'</div></div>';
+}
+/* ---------- aksi ---------- */
+function goRole(r){S.role=r;S.tab=ROLES[r].tabs[0][0];S.pick=null;S.note='';S.alasan='';S.msg='';S.modal=null;S.q=''}
+const A={
+  login(){const r=document.querySelector('input[name=rl]:checked');goRole(r?r.value:'peminjam')},
+  logout(){S.role=null;S.modal=null},
+  tab(a){S.tab=a;S.msg='';S.modal=null},
+  date(a){S.date=a;S.sel=[]},
+  toggle(a){const i=S.sel.indexOf(a);if(i>=0)S.sel.splice(i,1);else S.sel.push(a)},
+  toForm(){S.form=newForm();S.tab='ajukan'},
+  sampleForm(){const f=S.form;if(!f.ruang)f.ruang='r1';const kap=resOf(f.ruang).kap;Object.assign(f,{kegiatan:'Seminar Literasi Digital',pj:'Nuryanti, 0812-0000-0000',jml:String(Math.min(+f.jml||100,kap)),surat:'surat-izin-kegiatan.pdf',err:{},msg:'',conflict:null})},
+  sampleSurat(){S.form.surat='surat-izin-kegiatan.pdf'},
+  altRoom(a){S.form.ruang=a;S.form.conflict=null;S.form.msg=''},
+  altSlot(a){const p=a.split('|');S.form.s0=+p[0];S.form.s1=+p[1];S.form.conflict=null;S.form.msg=''},
+  submit(){
+    const f=S.form;f.err={};f.msg='';f.conflict=null;
+    if(!f.kegiatan.trim())f.err.kegiatan=true;
+    if(!f.pj.trim())f.err.pj=true;
+    if(!f.ruang)f.err.ruang=true;
+    if(!String(f.jml).trim())f.err.jml=true;
+    if(!f.surat)f.err.surat=true;
+    if(Object.keys(f.err).length){f.msg='Data atau surat belum lengkap. Lengkapi kolom yang ditandai.';return}
+    if(f.date<MIN_DATE){f.msg='Pengajuan ditolak: kurang dari tiga hari sebelum kegiatan (BR-02). Pilih tanggal '+fmt(MIN_DATE)+' atau setelahnya.';return}
+    if(+f.s0>+f.s1){f.msg='Jam mulai harus lebih awal dari jam selesai.';return}
+    const rr=resOf(f.ruang);
+    if(+f.jml>rr.kap){f.err.jml='Melebihi kapasitas '+rr.kap+' orang';f.msg='Jumlah peserta melebihi kapasitas ruang.';return}
+    const s0=+f.s0,s1=+f.s1,slots=range(s0,s1),ids=[f.ruang].concat(f.fas);
+    const cf=conflicts(ids,f.date,slots,null,PENDING.concat(FIRM));
+    if(cf.length){
+      const c=cf[0];
+      const altRooms=S.res.filter(r=>r.tipe==='ruang'&&r.aktif&&r.id!==f.ruang&&r.kap>=+f.jml&&!conflicts([r.id],f.date,slots,null,PENDING.concat(FIRM)).length);
+      const altSlots=[],len=slots.length;
+      for(let a=0;a+len-1<SLOTS.length;a++){if(a===s0)continue;const sl=range(a,a+len-1);if(!conflicts(ids,f.date,sl,null,PENDING.concat(FIRM)).length)altSlots.push([a,a+len-1])}
+      f.conflict={text:resOf(c.res).nama+' pada '+SLOTS[c.slot]+' sudah dipakai untuk "'+c.by.kegiatan+'" ('+c.by.status.toLowerCase()+').',altRooms:altRooms,altSlots:altSlots};
+      return;
+    }
+    const no=S.nextNo++;
+    const b={id:'b'+no,no:'PJ-2026-0'+no,kegiatan:f.kegiatan.trim(),pj:f.pj.trim(),pemohon:me(),res:ids,date:f.date,slots:slots,status:'Menunggu verifikasi',surat:f.surat,catatan:'',alasan:'',qr:'',jml:+f.jml,hist:[],kondisi:null};
+    addHist(b,'Diajukan. Status: Menunggu verifikasi');S.bk.push(b);
+    notify('Pengajuan '+b.no+' diterima dan menunggu verifikasi admin.');
+    S.sel=[];S.form=null;S.tab='saya';toast('Pengajuan '+b.no+' diterima.');
+  },
+  showQr(a){S.modal={type:'qr',id:a}},
+  closeModal(){S.modal=null},
+  overlay(a,el,ev){if(ev.target===el)S.modal=null},
+  editBk(a){const b=bkOf(a);S.modal={type:'edit',id:a,f:{date:b.date,s0:b.slots[0],s1:b.slots[b.slots.length-1]},err:''}},
+  saveEdit(){
+    const m=S.modal,b=bkOf(m.id),f=m.f;
+    if(f.date<MIN_DATE){m.err='Perubahan ditolak: kurang dari tiga hari sebelum kegiatan (BR-02).';return}
+    if(+f.s0>+f.s1){m.err='Jam mulai harus lebih awal dari jam selesai.';return}
+    const sl=range(+f.s0,+f.s1),cf=conflicts(b.res,f.date,sl,b.id,PENDING.concat(FIRM));
+    if(cf.length){m.err='Bentrok: '+resOf(cf[0].res).nama+' pada '+SLOTS[cf[0].slot]+' sudah dipakai.';return}
+    b.date=f.date;b.slots=sl;addHist(b,'Jadwal diubah menjadi '+fmt(f.date)+', '+slotLabel(b));S.modal=null;toast('Jadwal diubah.');
+  },
+  cancelBk(a){const b=bkOf(a);b.status='Dibatalkan';addHist(b,'Dibatalkan oleh peminjam. Jadwal dibuka kembali');notify('Pengajuan '+b.no+' dibatalkan.');toast('Pengajuan dibatalkan dan jadwal dibuka kembali.')},
+  pick(a){S.pick=a;S.note='';S.alasan='';S.msg=''},
+  forward(){const b=bkOf(S.pick);b.status='Menunggu persetujuan';b.catatan=S.note.trim()||'Berkas lengkap.';addHist(b,'Diverifikasi admin. Status: Menunggu persetujuan');S.note='';S.msg='';toast(b.no+' diteruskan ke pimpinan.')},
+  return(){
+    if(!S.note.trim()){S.msg='Isi catatan verifikasi sebelum mengembalikan pengajuan.';return}
+    const b=bkOf(S.pick);b.status='Dikembalikan';b.catatan=S.note.trim();addHist(b,'Dikembalikan admin dengan catatan');notify('Pengajuan '+b.no+' dikembalikan. Catatan: '+b.catatan);S.note='';S.msg='';toast(b.no+' dikembalikan ke peminjam.')},
+  approve(){
+    const b=bkOf(S.pick);
+    const cf=conflicts(b.res,b.date,b.slots,b.id,FIRM);
+    if(cf.length){S.msg='Persetujuan gagal: ditemukan bentrok baru dengan '+cf[0].by.no+'. Pengajuan tidak disetujui.';return}
+    b.status='Disetujui';b.qr='QR-'+b.no;addHist(b,'Disetujui pimpinan. Jadwal terkunci dan kode QR dibuat');
+    notify('Pengajuan '+b.no+' disetujui. Kode QR tersedia di Pengajuan Saya.');S.alasan='';S.msg='';toast(b.no+' disetujui. Jadwal terkunci, kode QR dibuat.')},
+  reject(){
+    if(!S.alasan.trim()){S.msg='Alasan penolakan wajib diisi.';return}
+    const b=bkOf(S.pick);b.status='Ditolak';b.alasan=S.alasan.trim();addHist(b,'Ditolak pimpinan. Alasan: '+b.alasan);notify('Pengajuan '+b.no+' ditolak. Alasan: '+b.alasan);S.alasan='';S.msg='';toast(b.no+' ditolak. Jadwal tidak dikunci.')},
+  toggleAktif(a){const r=resOf(a);r.aktif=!r.aktif;toast(r.nama+(r.aktif?' diaktifkan.':' dinonaktifkan dan disembunyikan dari kalender.'))},
+  addRes(){
+    const n=$('#nrNama').value.trim();if(!n){toast('Nama wajib diisi.');return}
+    S.res.push({id:'x'+Date.now(),nama:n,tipe:$('#nrTipe').value,kap:+$('#nrKap').value||1,gedung:$('#nrLok').value.trim()||'-',aktif:true});toast(n+' ditambahkan.')},
+  export(a){toast('Simulasi ekspor '+a+'. Berkas tidak diunduh pada prototipe.')},
+  search(){},
+  checkin(a){const b=bkOf(a);b.status='Digunakan';addHist(b,'Check-in dengan kode QR oleh petugas');toast('Check-in berhasil untuk '+b.no+'.')},
+  retForm(a){const b=bkOf(a);S.modal={type:'ret',id:a,k:b.res.map(()=>'Baik'),c:b.res.map(()=>''),late:false}},
+  saveRet(){
+    const m=S.modal,b=bkOf(m.id);
+    b.kondisi=b.res.map((r,i)=>({item:resOf(r).nama,k:m.k[i],c:m.c[i]}));b.terlambat=m.late;b.status='Selesai';
+    const bad=b.kondisi.some(k=>k.k!=='Baik');
+    addHist(b,'Pengembalian dicatat. Status: Selesai'+(b.terlambat?' (terlambat)':''));
+    notify('Peminjaman '+b.no+' selesai. Terima kasih.'+(bad?' Ada fasilitas rusak atau hilang, dicatat sebagai tanggung jawab peminjam (BR-07).':''));
+    S.modal=null;toast(bad?'Tersimpan. Admin diberi tahu: ada fasilitas rusak atau hilang (BR-07).':'Tersimpan. Status Selesai, jadwal dibuka kembali.')}
+};
+document.addEventListener('click',ev=>{
+  const el=ev.target.closest('[data-act]');if(!el)return;
+  const act=el.dataset.act;
+  if(act==='overlay'&&ev.target!==el)return;
+  if(A[act]){A[act](el.dataset.arg,el,ev);render()}
+});
+document.addEventListener('keydown',ev=>{if(ev.key==='Escape'&&S.modal){S.modal=null;render()}});
+function onField(ev){
+  const el=ev.target,k=el.dataset.f;if(!k)return;
+  if(k==='role'){goRole(el.value);render();return}
+  if(k==='note'){S.note=el.value;return}
+  if(k==='alasan'){S.alasan=el.value;return}
+  if(k==='q'){S.q=el.value;if(ev.key==='Enter')render();return}
+  if(k.startsWith('m.')){
+    const m=S.modal,f=m.f,i=+el.dataset.arg;
+    if(k==='m.date')f.date=el.value;if(k==='m.s0')f.s0=+el.value;if(k==='m.s1')f.s1=+el.value;
+    if(k==='m.k')m.k[i]=el.value;if(k==='m.c')m.c[i]=el.value;if(k==='m.late')m.late=el.checked;
+    return;
+  }
+  const f=S.form;if(!f)return;
+  if(k==='fas'){const id=el.dataset.arg;f.fas=f.fas.filter(x=>x!==id);if(el.checked)f.fas.push(id);return}
+  if(k==='surat'){f.surat=el.files&&el.files[0]?el.files[0].name:'';render();return}
+  f[k]=el.value;
+}
+document.addEventListener('input',onField);
+document.addEventListener('change',onField);
+document.addEventListener('keydown',ev=>{if(ev.key==='Enter'&&ev.target.dataset&&ev.target.dataset.f==='q')onField(ev)});
+render();
+</script>
+</body>
+</html>
